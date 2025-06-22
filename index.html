@@ -3,47 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moja Strona</title>
+    <title>LektorTekst - Komponenty Wideo</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>lektORtekst</h1>
-        </header>
-        
-        <section class="video-section">
-            <h2>Wideo Prezentacja</h2>
-            <div class="video-container">
-                <iframe 
-                    id="youtube-player"
-                    width="560" 
-                    height="315" 
-                    src="https://www.youtube.com/embed/BHACKCNDMW8?enablejsapi=1" 
-                    title="YouTube video player" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
-                </iframe>
-                <div id="subtitles-container"></div>
-            </div>
-        </section>
+    <div class="main-container">
+        <h1>lektORtekst</h1>
 
-        <section class="controls-section">
-            <div class="lektor-section">
-                <h2>Wgraj ścieżkę lektora</h2>
-                <p>Wybierz plik audio, aby podmienić dźwięk w filmie.</p>
-                <input type="file" id="audio-file-input" accept="audio/*">
-                <audio id="lektor-audio"></audio>
+        <!-- Komponent 1 -->
+        <div class="video-player-component" data-video-id="BHACKCNDMW8" data-audio-src="https://www.w3schools.com/html/horse.mp3" data-subtitles-src="https://www.w3schools.com/tags/mov_bbb.vtt">
+            <h2 class="component-title">Prezentacja produktu A</h2>
+            <div class="video-section">
+                <div class="video-container">
+                    <div class="youtube-player-container"></div>
+                    <div class="subtitles-container"></div>
+                </div>
             </div>
-            <div class="subtitles-section">
-                <h2>Wgraj napisy</h2>
-                <p>Wybierz plik z napisami (format .vtt).</p>
-                <input type="file" id="subtitles-file-input" accept=".vtt">
+            <section class="controls-section">
+                <div class="mode-controls">
+                    <div class="control-group">
+                        <span class="control-label">Dźwięk:</span>
+                        <label class="switch"><input type="radio" name="audio-mode" value="lector" checked><span class="slider"></span> Lektor PL</label>
+                        <label class="switch"><input type="radio" name="audio-mode" value="original"><span class="slider"></span> Oryginał</label>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">Napisy:</span>
+                        <label class="switch"><input type="checkbox" class="subtitles-toggle"><span class="slider"></span> Napisy PL</label>
+                    </div>
+                </div>
+                <audio class="lektor-audio" preload="auto"></audio>
+            </section>
+        </div>
+
+        <!-- Komponent 2 -->
+        <div class="video-player-component" data-video-id="M7lc1UVf-VE" data-audio-src="https://www.w3schools.com/html/horse.mp3" data-subtitles-src="https://www.w3schools.com/tags/mov_bbb.vtt">
+            <h2 class="component-title">Instrukcja obsługi B</h2>
+            <div class="video-section">
+                <div class="video-container">
+                    <div class="youtube-player-container"></div>
+                    <div class="subtitles-container"></div>
+                </div>
             </div>
-        </section>
-        
+            <section class="controls-section">
+                <div class="mode-controls">
+                    <div class="control-group">
+                        <span class="control-label">Dźwięk:</span>
+                        <label class="switch"><input type="radio" name="audio-mode" value="lector" checked><span class="slider"></span> Lektor PL</label>
+                        <label class="switch"><input type="radio" name="audio-mode" value="original"><span class="slider"></span> Oryginał</label>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">Napisy:</span>
+                        <label class="switch"><input type="checkbox" class="subtitles-toggle"><span class="slider"></span> Napisy PL</label>
+                    </div>
+                </div>
+                <audio class="lektor-audio" preload="auto"></audio>
+            </section>
+        </div>
     </div>
+
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="script.js"></script>
 </body>

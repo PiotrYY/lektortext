@@ -1,145 +1,190 @@
-// Zmienne globalne
-let player;
-let lektorAudio;
-let audioFileInput;
-let subtitlesFileInput;
-let subtitlesContainer;
-let subtitles = [];
-let subtitlesInterval;
+/**
+ * Zarządza pojedynczą instancją komponentu odtwarzacza wideo.
+ */
+class LektorPlayer {
+    constructor(element) {
+        this.element = element;
+        this.player = null;
+        this.lektorAudio = null;
+        this.subtitlesContainer = null;
+        this.subtitles = [];
+        this.subtitlesInterval = null;
 
-// Ta funkcja jest wywoływana automatycznie, gdy API YouTube jest gotowe.
-function onYouTubeIframeAPIReady() {
-    player = new YT.Player('youtube-player', {
-        events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
-        }
-    });
-}
+        // Odczytaj konfigurację z atrybutów data-*
+        this.videoId = this.element.dataset.videoId;
+        this.audioSrc = this.element.dataset.audioSrc;
+        this.subtitlesSrc = this.element.dataset.subtitlesSrc;
 
-// Ta funkcja jest wywoływana, gdy odtwarzacz wideo jest gotowy.
-function onPlayerReady(event) {
-    // Inicjalizacja elementów DOM
-    lektorAudio = document.getElementById('lektor-audio');
-    audioFileInput = document.getElementById('audio-file-input');
-    subtitlesFileInput = document.getElementById('subtitles-file-input');
-    subtitlesContainer = document.getElementById('subtitles-container');
-
-    // Nasłuchiwanie na zmianę pliku w inpucie audio
-    audioFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const fileURL = URL.createObjectURL(file);
-            lektorAudio.src = fileURL;
-            player.mute();
-            // Możesz dodać informację dla użytkownika, że lektor jest gotowy
-            alert('Plik audio z lektorem został załadowany. Użyj kontrolek YouTube, aby odtwarzać.');
-        }
-    });
-
-    // Nasłuchiwanie na zmianę pliku w inpucie napisów
-    subtitlesFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                subtitles = parseVTT(evt.target.result);
-                alert('Plik z napisami został załadowany.');
-            };
-            reader.readAsText(file);
-        }
-    });
-}
-
-// Ta funkcja jest wywoływana, gdy stan odtwarzacza się zmienia.
-function onPlayerStateChange(event) {
-    // Synchronizacja audio lektora z wideo
-    switch (event.data) {
-        case YT.PlayerState.PLAYING:
-            lektorAudio.play();
-            startSubtitles();
-            break;
-        case YT.PlayerState.PAUSED:
-            lektorAudio.pause();
-            stopSubtitles();
-            break;
-        case YT.PlayerState.ENDED:
-            lektorAudio.currentTime = 0;
-            lektorAudio.pause();
-            stopSubtitles();
-            break;
-        case YT.PlayerState.BUFFERING:
-            lektorAudio.pause();
-            stopSubtitles();
-            break;
-        default:
-            // Do nothing
-    }
-}
-
-function parseVTT(data) {
-    // Usuń nagłówek WEBVTT i znormalizuj końce linii
-    const processedData = data.replace(/^WEBVTT\s*/, '').replace(/\r/g, '');
-    // Podziel na pojedyncze bloki z napisami
-    const cues = processedData.split(/\n\n+/);
-
-    const subtitles = [];
-
-    function timeToSeconds(timeStr) {
-        if (!timeStr) return 0;
-        const parts = timeStr.trim().split(':');
-        let seconds = 0;
-        if (parts.length === 3) {
-            // Format HH:MM:SS.mmm
-            seconds = parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2].replace(',', '.'));
-        } else if (parts.length === 2) {
-            // Format MM:SS.mmm
-            seconds = parseFloat(parts[0]) * 60 + parseFloat(parts[1].replace(',', '.'));
-        }
-        return seconds;
+        // Znajdź kluczowe elementy wewnątrz komponentu
+        this.playerContainer = this.element.querySelector('.youtube-player-container');
+        this.lektorAudio = this.element.querySelector('.lektor-audio');
+        this.subtitlesContainer = this.element.querySelector('.subtitles-container');
     }
 
-    for (const cue of cues) {
-        const lines = cue.trim().split('\n');
-        if (lines.length < 2) continue;
+    /**
+     * Inicjalizuje odtwarzacz YouTube dla tej instancji.
+     */
+    initPlayer() {
+        const uniqueId = 'player-' + Math.random().toString(36).substring(2, 9);
+        this.playerContainer.id = uniqueId;
 
-        // Pomijamy opcjonalny identyfikator napisu (np. "1")
-        const timeLineIndex = lines[0].includes('-->') ? 0 : 1;
-        if (!lines[timeLineIndex] || !lines[timeLineIndex].includes('-->')) continue;
+        // Ustaw unikalne nazwy dla radio buttonów, aby nie kolidowały z innymi instancjami
+        this.element.querySelectorAll('input[name="audio-mode"]').forEach(radio => {
+            radio.name = `audio-mode-${uniqueId}`;
+        });
 
-        const timeParts = lines[timeLineIndex].split(' --> ');
-        const textLines = lines.slice(timeLineIndex + 1).join('<br>');
-
-        subtitles.push({
-            time: {
-                start: timeToSeconds(timeParts[0]),
-                // Ignorujemy dodatkowe ustawienia w linii czasu, np. align:start
-                end: timeToSeconds(timeParts[1].split(' ')[0])
-            },
-            text: textLines
+        this.player = new YT.Player(uniqueId, {
+            videoId: this.videoId,
+            playerVars: { 'playsinline': 1 },
+            events: {
+                'onReady': (event) => this.onPlayerReady(event),
+                'onStateChange': (event) => this.onPlayerStateChange(event)
+            }
         });
     }
-    return subtitles;
-}
 
-function startSubtitles() {
-    if (subtitles.length > 0) {
-        subtitlesInterval = setInterval(() => {
-            const currentTime = player.getCurrentTime();
-            const currentSubtitle = subtitles.find(
-                (sub) => currentTime >= sub.time.start && currentTime <= sub.time.end
-            );
+    /**
+     * Wywoływana, gdy odtwarzacz jest gotowy.
+     */
+    onPlayerReady() {
+        this.loadResources();
+        this.setupControls();
+        this.setAudioMode('lector'); // Ustaw stan domyślny
+    }
 
-            if (currentSubtitle) {
-                subtitlesContainer.innerHTML = currentSubtitle.text;
-                subtitlesContainer.style.opacity = 1;
-            } else {
-                subtitlesContainer.style.opacity = 0;
+    /**
+     * Ładuje zewnętrzne zasoby (audio i napisy).
+     */
+    loadResources() {
+        if (this.audioSrc) {
+            this.lektorAudio.src = this.audioSrc;
+        }
+        if (this.subtitlesSrc) {
+            fetch(this.subtitlesSrc)
+                .then(response => response.ok ? response.text() : Promise.reject('Błąd sieci'))
+                .then(data => {
+                    this.subtitles = this.parseVTT(data);
+                })
+                .catch(error => console.error('Błąd wczytywania napisów:', error));
+        }
+    }
+
+    /**
+     * Ustawia listenery dla kontrolek tej instancji.
+     */
+    setupControls() {
+        this.element.querySelectorAll(`input[name^="audio-mode-"]`).forEach(radio => {
+            radio.addEventListener('change', (e) => this.setAudioMode(e.target.value));
+        });
+        this.element.querySelector('.subtitles-toggle').addEventListener('change', (e) => {
+            this.toggleSubtitles(e.target.checked);
+        });
+    }
+
+    /**
+     * Wywoływana przy zmianie stanu odtwarzacza (odtwarzanie, pauza, etc.).
+     */
+    onPlayerStateChange(event) {
+        const isLectorActive = this.element.querySelector('input[value="lector"]').checked;
+        if (!isLectorActive || !this.lektorAudio) return;
+
+        switch (event.data) {
+            case YT.PlayerState.PLAYING: this.lektorAudio.play(); break;
+            case YT.PlayerState.PAUSED: this.lektorAudio.pause(); break;
+            case YT.PlayerState.ENDED:
+                this.lektorAudio.currentTime = 0;
+                this.lektorAudio.pause();
+                break;
+            case YT.PlayerState.BUFFERING: this.lektorAudio.pause(); break;
+        }
+    }
+    
+    setAudioMode(mode) {
+        if (mode === 'lector') {
+            this.player.mute();
+            if (this.player.getPlayerState() === YT.PlayerState.PLAYING) {
+                this.lektorAudio.currentTime = this.player.getCurrentTime();
+                this.lektorAudio.play();
             }
-        }, 100); // Sprawdzanie co 100ms
+        } else {
+            this.player.unMute();
+            this.lektorAudio.pause();
+        }
+    }
+
+    toggleSubtitles(show) {
+        if (show) {
+            this.startSubtitles();
+        } else {
+            this.stopSubtitles();
+            if (this.subtitlesContainer) {
+                this.subtitlesContainer.style.opacity = 0;
+            }
+        }
+    }
+
+    startSubtitles() {
+        if (this.subtitles.length > 0) {
+            this.subtitlesInterval = setInterval(() => {
+                const currentTime = this.player.getCurrentTime();
+                const currentSubtitle = this.subtitles.find(
+                    (sub) => currentTime >= sub.time.start && currentTime <= sub.time.end
+                );
+                if (currentSubtitle) {
+                    this.subtitlesContainer.innerHTML = currentSubtitle.text;
+                    this.subtitlesContainer.style.opacity = 1;
+                } else {
+                    this.subtitlesContainer.style.opacity = 0;
+                }
+            }, 100);
+        }
+    }
+
+    stopSubtitles() {
+        clearInterval(this.subtitlesInterval);
+    }
+
+    parseVTT(data) {
+        const processedData = data.replace(/^WEBVTT\s*/, '').replace(/\r/g, '');
+        const cues = processedData.split(/\n\n+/);
+        const subtitles = [];
+        const timeToSeconds = (timeStr) => {
+            if (!timeStr) return 0;
+            const parts = timeStr.trim().split(':');
+            let seconds = 0;
+            if (parts.length === 3) {
+                seconds = parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2].replace(',', '.'));
+            } else if (parts.length === 2) {
+                seconds = parseFloat(parts[0]) * 60 + parseFloat(parts[1].replace(',', '.'));
+            }
+            return seconds;
+        };
+        for (const cue of cues) {
+            const lines = cue.trim().split('\n');
+            if (lines.length < 2) continue;
+            const timeLineIndex = lines[0].includes('-->') ? 0 : 1;
+            if (!lines[timeLineIndex] || !lines[timeLineIndex].includes('-->')) continue;
+            const timeParts = lines[timeLineIndex].split(' --> ');
+            const textLines = lines.slice(timeLineIndex + 1).join('<br>');
+            subtitles.push({
+                time: {
+                    start: timeToSeconds(timeParts[0]),
+                    end: timeToSeconds(timeParts[1].split(' ')[0])
+                },
+                text: textLines
+            });
+        }
+        return subtitles;
     }
 }
 
-function stopSubtitles() {
-    clearInterval(subtitlesInterval);
+/**
+ * Globalna funkcja wywoływana przez API YouTube, gdy jest gotowe.
+ * Znajduje wszystkie komponenty na stronie i tworzy dla nich instancje LektorPlayer.
+ */
+function onYouTubeIframeAPIReady() {
+    document.querySelectorAll('.video-player-component').forEach(element => {
+        const playerInstance = new LektorPlayer(element);
+        playerInstance.initPlayer();
+    });
 } 
