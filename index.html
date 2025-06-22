@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moja Strona</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>lektORtekst</h1>
+        </header>
+        
+        <section class="video-section">
+            <h2>Wideo Prezentacja</h2>
+            <div class="video-container">
+                <iframe 
+                    id="youtube-player"
+                    width="560" 
+                    height="315" 
+                    src="https://www.youtube.com/embed/BHACKCNDMW8?enablejsapi=1" 
+                    title="YouTube video player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+                <div id="subtitles-container"></div>
+            </div>
+        </section>
+
+        <section class="controls-section">
+            <div class="lektor-section">
+                <h2>Wgraj ścieżkę lektora</h2>
+                <p>Wybierz plik audio, aby podmienić dźwięk w filmie.</p>
+                <input type="file" id="audio-file-input" accept="audio/*">
+                <audio id="lektor-audio"></audio>
+            </div>
+            <div class="subtitles-section">
+                <h2>Wgraj napisy</h2>
+                <p>Wybierz plik z napisami (format .vtt).</p>
+                <input type="file" id="subtitles-file-input" accept=".vtt">
+            </div>
+        </section>
+        
+    </div>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
