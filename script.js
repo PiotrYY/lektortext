@@ -11,7 +11,8 @@ class LektorPlayer {
         this.subtitlesInterval = null;
 
         // Odczytaj konfigurację z atrybutów data-*
-        this.videoId = this.element.dataset.videoId;
+        this.videoUrl = this.element.dataset.videoUrl;
+        this.videoId = this.extractVideoId(this.videoUrl);
         this.audioSrc = this.element.dataset.audioSrc;
         this.subtitlesSrc = this.element.dataset.subtitlesSrc;
 
@@ -19,6 +20,24 @@ class LektorPlayer {
         this.playerContainer = this.element.querySelector('.youtube-player-container');
         this.lektorAudio = this.element.querySelector('.lektor-audio');
         this.subtitlesContainer = this.element.querySelector('.subtitles-container');
+    }
+
+    /**
+     * Wyodrębnia ID filmu YouTube z różnych formatów URL.
+     * @param {string} url - Adres URL filmu.
+     * @returns {string|null} - ID filmu lub null, jeśli nie znaleziono.
+     */
+    extractVideoId(url) {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+
+        if (match && match[2].length === 11) {
+            return match[2];
+        } else {
+            console.error('Nie udało się wyodrębnić ID filmu z URL:', url);
+            return null;
+        }
     }
 
     /**
@@ -35,7 +54,10 @@ class LektorPlayer {
 
         this.player = new YT.Player(uniqueId, {
             videoId: this.videoId,
-            playerVars: { 'playsinline': 1 },
+            playerVars: { 
+                'playsinline': 1,
+                'rel': 0 
+            },
             events: {
                 'onReady': (event) => this.onPlayerReady(event),
                 'onStateChange': (event) => this.onPlayerStateChange(event)
@@ -49,7 +71,23 @@ class LektorPlayer {
     onPlayerReady() {
         this.loadResources();
         this.setupControls();
-        this.setAudioMode('lector'); // Ustaw stan domyślny
+        
+        // Odczytaj domyślny tryb z atrybutu 'checked' w HTML,
+        // ponieważ właściwość DOM ':checked' może być nieprawidłowa z powodu kolizji nazw.
+        const defaultRadio = this.element.querySelector('input[name^="audio-mode-"][checked]');
+        
+        let defaultMode = 'original';
+        if (defaultRadio) {
+            defaultMode = defaultRadio.value;
+            // Upewnijmy się, że po zmianie nazw przycisk jest poprawnie zaznaczony wizualnie.
+            defaultRadio.checked = true;
+        } else {
+            // Jeśli żaden przycisk nie miał atrybutu 'checked', zaznacz 'Oryginał'.
+            const originalRadio = this.element.querySelector('input[value="original"]');
+            if(originalRadio) originalRadio.checked = true;
+        }
+
+        this.setAudioMode(defaultMode);
     }
 
     /**
@@ -101,13 +139,13 @@ class LektorPlayer {
     
     setAudioMode(mode) {
         if (mode === 'lector') {
-            this.player.mute();
+            this.player.setVolume(20);
             if (this.player.getPlayerState() === YT.PlayerState.PLAYING) {
                 this.lektorAudio.currentTime = this.player.getCurrentTime();
                 this.lektorAudio.play();
             }
         } else {
-            this.player.unMute();
+            this.player.setVolume(100);
             this.lektorAudio.pause();
         }
     }

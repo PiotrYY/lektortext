@@ -111,6 +111,10 @@ body {
     font-weight: bold;
 }
 
+.lector-switch {
+    margin-left: 40px;
+}
+
 .switch {
     position: relative;
     display: inline-flex;
