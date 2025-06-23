@@ -130,7 +130,6 @@ body {
 }
 
 .slider {
-    position: relative;
     width: 44px;
     height: 24px;
     background-color: #ccc;
@@ -145,7 +144,8 @@ body {
     height: 18px;
     width: 18px;
     left: 3px;
-    bottom: 3px;
+    top: 50%;
+    transform: translateY(-50%);
     background-color: white;
     transition: .4s;
     border-radius: 50%;
@@ -156,7 +156,7 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-    transform: translateX(20px);
+    transform: translateX(20px) translateY(-50%);
 }
 
 .lektor-section, .subtitles-section {
@@ -184,7 +184,7 @@ input:checked + .slider:before {
         flex-direction: column;
         align-items: stretch;
         width: 100%;
-        gap: 20px;
+        gap: 15px;
     }
 
     .switch {
