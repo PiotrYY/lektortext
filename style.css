@@ -176,14 +176,12 @@ input:checked + .slider:before {
 
 @media (max-width: 600px) {
     .mode-controls {
-        flex-direction: column;
         gap: 15px;
     }
 
     .control-group {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
         gap: 15px;
     }
 
