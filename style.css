@@ -176,23 +176,37 @@ input:checked + .slider:before {
 
 @media (max-width: 600px) {
     .mode-controls {
-        gap: 15px;
+        gap: 10px;
     }
 
     .control-group {
         flex-direction: row;
         justify-content: center;
-        flex-wrap: wrap;
-        gap: 15px;
+        flex-wrap: nowrap;
+        gap: 10px;
     }
 
     .switch {
-        font-size: 0.9em;
-        justify-content: space-between;
+        font-size: 0.8em;
     }
 
     .lector-switch {
         margin-left: 0;
+    }
+
+    .slider {
+        width: 36px;
+        height: 20px;
+        margin-right: 5px;
+    }
+
+    .slider:before {
+        height: 14px;
+        width: 14px;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(16px) translateY(-50%);
     }
 
     .main-container {
