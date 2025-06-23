@@ -169,4 +169,42 @@ input:checked + .slider:before {
 
 #audio-file-input {
     margin-top: 10px;
+}
+
+/* --- Media Queries for Responsiveness --- */
+
+@media (max-width: 600px) {
+    .mode-controls {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 20px;
+    }
+
+    .switch {
+        font-size: 0.9em;
+        justify-content: space-between;
+    }
+
+    .lector-switch {
+        margin-left: 0;
+    }
+
+    .main-container {
+        gap: 20px;
+        padding: 10px;
+    }
+
+    body {
+        padding: 0;
+    }
+
+    .video-player-component {
+        padding: 15px;
+    }
 } 
