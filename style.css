@@ -130,6 +130,7 @@ body {
 }
 
 .slider {
+    position: relative;
     width: 44px;
     height: 24px;
     background-color: #ccc;
