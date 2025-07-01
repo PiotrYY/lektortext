@@ -127,8 +127,13 @@ class LektorPlayer {
         if (!isLectorActive || !this.lektorAudio) return;
 
         switch (event.data) {
-            case YT.PlayerState.PLAYING: this.lektorAudio.play(); break;
-            case YT.PlayerState.PAUSED: this.lektorAudio.pause(); break;
+            case YT.PlayerState.PLAYING:
+                this.lektorAudio.currentTime = this.player.getCurrentTime();
+                this.lektorAudio.play();
+                break;
+            case YT.PlayerState.PAUSED:
+                this.lektorAudio.pause();
+                break;
             case YT.PlayerState.ENDED:
                 this.lektorAudio.currentTime = 0;
                 this.lektorAudio.pause();
